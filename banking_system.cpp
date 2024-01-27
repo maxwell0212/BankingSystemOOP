@@ -18,14 +18,51 @@ void ShowAllAccInfo(void);     // 잔액조회
 
 enum { MAKE = 1, DEPOSIT, WITHDRAW, INQUIRE, EXIT };
 
-typedef struct
+class Account
 {
+private:
 	int accID;      // 계좌번호
 	int balance;    // 잔    액
-	char cusName[NAME_LEN];   // 고객이름
-} Account;
+	char* cusName;   // 고객이름
 
-Account accArr[100];   // Account 저장을 위한 배열
+public:
+	Account(int ID, int money, char* name)
+		: accID(ID), balance(money)
+	{
+		cusName = new char[strlen(name) + 1];
+		strcpy(cusName, name);
+	}
+
+	int GetAccID() { return accID; }
+
+	void Deposit(int money)
+	{
+		balance += money;
+	}
+
+	int Withdraw(int money)    // 출금액 반환, 부족 시 0
+	{
+		if (balance < money)
+			return 0;
+
+		balance -= money;
+		return money;
+	}
+
+	void ShowAccInfo()
+	{
+		cout << "계좌ID: " << accID << endl;
+		cout << "이  름: " << cusName << endl;
+		cout << "잔  액: " << balance << endl;
+	}
+
+	~Account()
+	{
+		delete[]cusName;
+	}
+};
+
+Account * accArr[100];   // Account 저장을 위한 배열
 int accNum = 0;        // 저장된 Account 수
 
 int main(void)
@@ -59,6 +96,10 @@ int main(void)
 			cout << "Illegal selection.." << endl;
 		}
 	}
+
+	for (int i = 0; i < accNum; i++)
+		delete accArr[i];
+
 	return 0;
 }
 
@@ -84,10 +125,7 @@ void MakeAccount(void)
 	cout << "입금액: ";	cin >> balance;
 	cout << endl;
 
-	accArr[accNum].accID = id;
-	accArr[accNum].balance = balance;
-	strcpy(accArr[accNum].cusName, name);
-	accNum++;
+	accArr[accNum++] = new Account(id, balance, name);
 }
 
 void DepositMoney(void)
@@ -100,9 +138,9 @@ void DepositMoney(void)
 
 	for (int i = 0; i < accNum; i++)
 	{
-		if (accArr[i].accID == id)
+		if (accArr[i]->GetAccID() == id)
 		{
-			accArr[i].balance += money;
+			accArr[i]->Deposit(money);
 			cout << "입금완료" << endl << endl;
 			return;
 		}
@@ -120,15 +158,14 @@ void WithdrawMoney(void)
 
 	for (int i = 0; i < accNum; i++)
 	{
-		if (accArr[i].accID == id)
+		if (accArr[i]->GetAccID() == id)
 		{
-			if (accArr[i].balance < money)
+			if (accArr[i]->Withdraw(money) == 0)
 			{
 				cout << "잔액부족" << endl << endl;
 				return;
 			}
 
-			accArr[i].balance -= money;
 			cout << "출금완료" << endl << endl;
 			return;
 		}
@@ -140,8 +177,7 @@ void ShowAllAccInfo(void)
 {
 	for (int i = 0; i < accNum; i++)
 	{
-		cout << "계좌ID: " << accArr[i].accID << endl;
-		cout << "이  름: " << accArr[i].cusName << endl;
-		cout << "잔  액: " << accArr[i].balance << endl << endl;
+		accArr[i]->ShowAccInfo();
+		cout << endl;
 	}
 }
